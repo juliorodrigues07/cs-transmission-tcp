@@ -1,34 +1,27 @@
-#include "server.h"
+#include "transmission.h"
 
-void error(const char *msg) {
-    perror(msg);
-    exit(1);
-}
+int main (int argc, char **argv) {
 
-int socket_creation(int port_number, int n_connections){
+    if (argc != 3)
+        error("Usage: ./server <port_number> <buffer_size>\n");
 
-    bool check = true;
-    struct sockaddr_in serv_addr;
-    int socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    unsigned int port_number = atoi(argv[1]);
+    unsigned int buffer_size = atoi(argv[2]);
 
-    if (socket_fd < 0)
-        error("ERROR: Opening!\n");
+    char *buffer = (char *) malloc(buffer_size * sizeof(char));
 
-    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &check, sizeof(int)) == -1)
-        error("ERROR: Already in use!\n");
+    struct sockaddr_in server_address;
+    bzero(&server_address, sizeof(server_address));
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(port_number);
+    server_address.sin_addr.s_addr = INADDR_ANY;
 
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serv_addr.sin_port = htons(port_number);
+    int server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (server_socket < 0)
+        error("ERROR: Opening socket!\n");
 
-    if (bind(socket_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        close(socket_fd);
-        error("ERROR: Binding!\n");
-    }
+    struct timeval start_time, finish_time;
 
-    if (listen(socket_fd, n_connections) < 0)
-        error("ERROR: Listening!\n");
-
-    return socket_fd;
+    free(buffer);
+    return 0;
 }
