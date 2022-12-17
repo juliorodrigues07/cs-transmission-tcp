@@ -1,4 +1,4 @@
-#include "client.h"
+#include "server.h"
 
 void error (const char *msg) {
     perror(msg);
