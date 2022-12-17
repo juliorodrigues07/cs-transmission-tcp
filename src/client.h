@@ -12,7 +12,4 @@
 #include <stdio.h>
 
 // ACUSAÇÃO DE ERROS
-void error (const char *msg) {
-    perror(msg);
-    exit(1);
-}
+void error (const char *msg);

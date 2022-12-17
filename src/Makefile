@@ -1,7 +1,7 @@
-client.o: transmission.h
+client.o: client.h
 	gcc -c client.c
 
-server.o: transmission.h
+server.o: server.h
 	gcc -c server.c
 
 clean:
