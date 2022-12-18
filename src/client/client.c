@@ -45,7 +45,7 @@ int main (int argc, char **argv) {
 
     char message[100];
     long int receiving = recv(client_socket, message, 100, 0);
-    if (!strcmp("ACK", message) || receiving < 0)
+    if (strcmp("ACK", message) != 0 || receiving < 0)
         error("ERROR: ACK! (Client)\n");
 
     for (int i = 0; i < strlen(file_name); i++) {
@@ -60,7 +60,7 @@ int main (int argc, char **argv) {
         error("ERROR: Sending EOF! (Client)\n");
 
     receiving = recv(client_socket, message, 100, 0);
-    if (!strcmp("ACK", message) || receiving < 0)
+    if (strcmp("ACK", message) != 0 || receiving < 0)
         error("ERROR: File ACK! (Client)\n");
 
     unsigned int bytes_received = 0;
@@ -83,8 +83,9 @@ int main (int argc, char **argv) {
     if (sending < 0)
         error("ERROR: Sending END! (Client)\n");
 
+    // ACK
     receiving = recv(client_socket, message, 100, 0);
-    if (!strcmp("END", message) || receiving < 0)
+    if (strcmp("END", message) != 0 || receiving < 0)
         error("ERROR: Receiving END! (Client)\n");
 
     fclose(file);

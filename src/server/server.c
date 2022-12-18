@@ -61,7 +61,7 @@ int main (int argc, char **argv) {
 
     char message[100];
     long int receiving = recv(client_socket, message, 100, 0);
-    if (!strcmp("Handshake", message) || receiving < 0)
+    if (strcmp("Handshake", message) != 0 || receiving < 0)
         error("ERROR: Handshake! (Server)\n");
 
     long int sending = send(client_socket, "ACK", 4, 0);
@@ -109,7 +109,7 @@ int main (int argc, char **argv) {
     bytes_sended += sending;
 
     receiving = recv(client_socket, message, 100, 0);
-    if (!strcmp("END", message) || receiving < 0)
+    if (strcmp("END", message) != 0 || receiving < 0)
         error("ERROR: Receiving END! (Server)\n");
 
     sending = send(client_socket, "END", 4, 0);
