@@ -3,7 +3,7 @@ all:
 
 clean:
 	rm -rf *.o
-	rm -rf main
+	rm -rf server
 
 run:
-	./client 2000 128
+	./server 2000 128
