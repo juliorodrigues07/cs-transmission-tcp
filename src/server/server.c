@@ -14,6 +14,7 @@ int socket_creation (unsigned int port_number) {
     server_address.sin_port = htons(port_number);
     server_address.sin_addr.s_addr = INADDR_ANY;
 
+    // Cria o socket do servidor, verificando possíveis erros
     int server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if (server_socket < 0)
@@ -40,9 +41,6 @@ int main (int argc, char **argv) {
     unsigned int port_number = atoi(argv[1]);
     unsigned int buffer_size = atoi(argv[2]);
 
-    struct timeval start_time;
-    gettimeofday(&start_time, NULL);
-
     char *buffer = (char *) malloc(buffer_size * sizeof(char));
 
     // Criação do socket do servidor
@@ -53,24 +51,21 @@ int main (int argc, char **argv) {
 
     struct sockaddr_in client_address;
     unsigned int client_size = sizeof(client_address);
+
+    // Aceita a conexão de clientes
     int client_socket = accept(server_socket, (struct sockaddr *) &client_address, &client_size);
     if (client_socket < 0)
         error("ERROR: Accept! (Server)\n");
 
     printf("Connection Successful!\n");
 
-    char message[100];
-    long int receiving = recv(client_socket, message, 100, 0);
-    if (strcmp("Handshake", message) != 0 || receiving < 0)
-        error("ERROR: Handshake! (Server)\n");
-
-    long int sending = send(client_socket, "ACK", 4, 0);
-    if (sending < 0)
-        error("ERROR: ACK! (Server)\n");
-
-    //unsigned int bytes_sended = sending;
-
     int i;
+    char message[100];
+
+    // Contadores de bytes recebidos e enviados
+    long int receiving, sending;
+
+    // Obtém o nome do arquivo byte a byte
     for (i = 0; ; i++) {
 
         receiving = recv(client_socket, &message[i], 1, 0);
@@ -80,58 +75,60 @@ int main (int argc, char **argv) {
         if (message[i] == '\0')
             break;
     }
-    //message[i] = '\0';
 
-    sending = send(client_socket, "ACK", 4, 0);
-    if (sending < 0)
-        error("ERROR: File ACK! (Server)\n");
+    // Volta dois diretórios no caminho (server e src)
+    chdir("..");
+    chdir("..");
 
-    //bytes_sended += sending;
+    // Obtém o diretório corrente concatenado ao diretório de arquivos cwd + /files/
+    char cwd[PATH_MAX];
+    char path[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
+    strcpy(path, strcat(cwd, "/files/"));
 
+    // Começa a contagem do tempo de transmissão
+    struct timeval start_time;
+    gettimeofday(&start_time, NULL);
+
+    // Abre o arquivo em modo leitura (se existir) para enviar ao cliente
     unsigned int bytes_sended = 0;
-    FILE *file = fopen(strcat(".../files/", message), "r");
+    FILE *file = fopen(strcat(path, message), "r");
     if (file == NULL)
         error("ERROR: Opening file! (Server)\n");
 
+    // Enquanto houver conteúdo no arquivo (bytes) envia ao cliente respeitando o tamanho do buffer
     while (fgets(buffer, (int) buffer_size, file) != NULL) {
 
         sending = send(client_socket, buffer, buffer_size, 0);
         if (sending < 0)
             error("ERROR: Sending file via buffer! (Server)\n");
 
+        // Acumula o total de bytes enviados
         bytes_sended += sending;
     }
 
+    // Sinaliza a finalização da transmissão
     sending = send(client_socket, "\0", 1, 0);
     if (sending < 0)
         error("ERROR: Sending EOF! (Server)\n");
 
-    bytes_sended += sending;
-
-    receiving = recv(client_socket, message, 100, 0);
-    if (strcmp("END", message) != 0 || receiving < 0)
-        error("ERROR: Receiving END! (Server)\n");
-
-    sending = send(client_socket, "END", 4, 0);
-    if (sending < 0)
-        error("ERROR: Sending END! (Server)\n");
-
-    bytes_sended += sending;
-
+    // Fecha o arquivo e os sockets de comunicação
     fclose(file);
     close(client_socket);
     close(server_socket);
 
+    // Finaliza a contagem do tempo de transmissão
     struct timeval finish_time;
     gettimeofday(&finish_time, NULL);
 
+    // Obtém o tempo total para geração do relatório de transmissão com as estatísticas
     unsigned int start = start_time.tv_sec * 1000000 + start_time.tv_usec;
     unsigned int finish = finish_time.tv_sec * 1000000 + finish_time.tv_usec;
     double total_time = (finish - start) / 1000000.0;
+    double bit_rate = (((bytes_sended / 1000.0) * 8) / total_time);
 
-    //printf("%0.3lf\n", total_time);
-    printf("Buffer: %5u Byte(s) \nTaxa: %10.2lf kbps (%u Bytes em %0.3lf s)\n", buffer_size,
-                                                                                ((bytes_sended / 1000.0) / total_time),
+    printf("Buffer: %5u Byte(s) \nTaxa: %10.2lf Kbps (%u Bytes em %0.3lf s)\n", buffer_size,
+                                                                                bit_rate,
                                                                                 bytes_sended,
                                                                                 total_time);
 
