@@ -13,8 +13,11 @@ int main (int argc, char **argv) {
     // Argumentos da linha de comando
     char *server_host = argv[1];
     unsigned int port_number = atoi(argv[2]);
-    char *file_name = atoi(argv[3]);
+    char *file_name = argv[3];
     unsigned int buffer_size = atoi(argv[4]);
+
+    struct timeval start_time;
+    gettimeofday(&start_time, NULL);
 
     char *buffer = (char *) malloc(buffer_size * sizeof(char));
 
@@ -36,9 +39,6 @@ int main (int argc, char **argv) {
 
     printf("Connection Successful!\n");
 
-    struct timeval start_time;
-    gettimeofday(&start_time, NULL);
-
     long int sending = send(client_socket, "Handshake", 10, 0);
     if (sending < 0)
         error("ERROR: Handshake! (Client)\n");
@@ -52,7 +52,7 @@ int main (int argc, char **argv) {
 
         sending = send(client_socket, &file_name[i], 1, 0);
         if (sending < 0)
-            error("ERROR: Sending file via buffer! (Client)\n");
+            error("ERROR: Sending file name! (Client)\n");
     }
 
     sending = send(client_socket, "\0", 1, 0);
@@ -66,8 +66,26 @@ int main (int argc, char **argv) {
     unsigned int bytes_received = 0;
     FILE *file = fopen("output.txt", "w");
 
-    while (true)
-        break;
+    while (true) {
+
+        receiving = recv(client_socket, buffer, buffer_size, 0);
+        if (receiving < 0)
+            error("ERROR: Receiving file via buffer! (Client)\n");
+
+        if (!strcmp(buffer, "\0"))
+            break;
+
+        fprintf(file, "%s", buffer);
+        bytes_received += receiving;
+    }
+
+    sending = send(client_socket, "END", 4, 0);
+    if (sending < 0)
+        error("ERROR: Sending END! (Client)\n");
+
+    receiving = recv(client_socket, message, 100, 0);
+    if (!strcmp("END", message) || receiving < 0)
+        error("ERROR: Receiving END! (Client)\n");
 
     fclose(file);
     close(client_socket);
