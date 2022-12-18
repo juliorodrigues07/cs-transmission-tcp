@@ -6,4 +6,4 @@ clean:
 	rm -rf client
 
 run:
-	./client 127.0.0.1 2000 cat 128
+	./client 127.0.0.1 2000 644.txt 128
