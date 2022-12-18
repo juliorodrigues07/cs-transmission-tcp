@@ -61,7 +61,7 @@ int main (int argc, char **argv) {
 
     char message[100];
     long int receiving = recv(client_socket, message, 100, 0);
-    if (!strcmp(message, "Handshake") ||  receiving < 0)
+    if (!strcmp("Handshake", message) || receiving < 0)
         error("ERROR: Handshake! (Server)\n");
 
     long int sending = send(client_socket, "ACK", 4, 0);
@@ -70,8 +70,56 @@ int main (int argc, char **argv) {
 
     unsigned int bytes_sended = sending;
 
-    while (true)
-        break;
+    int i;
+    for (i = 0; ; i++) {
+
+        receiving = recv(client_socket, &message[i], 1, 0);
+        if (receiving < 0)
+            error("ERROR: Receiving file name! (Server)\n");
+
+        if (message[i] == '\0')
+            break;
+    }
+    //message[i] = '\0';
+
+    sending = send(client_socket, "ACK", 4, 0);
+    if (sending < 0)
+        error("ERROR: File ACK! (Server)\n");
+
+    bytes_sended += sending;
+
+    FILE *file = fopen(strcat(".../files/", message), "r");
+    if (file == NULL)
+        error("ERROR: Opening file! (Server)\n");
+
+    while (fgets(buffer, (int) buffer_size, file) != NULL) {
+
+        sending = send(client_socket, buffer, buffer_size, 0);
+        if (sending < 0)
+            error("ERROR: Sending file via buffer! (Server)\n");
+
+        bytes_sended += sending;
+    }
+
+    sending = send(client_socket, "\0", 1, 0);
+    if (sending < 0)
+        error("ERROR: Sending EOF! (Server)\n");
+
+    bytes_sended += sending;
+
+    receiving = recv(client_socket, message, 100, 0);
+    if (!strcmp("END", message) || receiving < 0)
+        error("ERROR: Receiving END! (Server)\n");
+
+    sending = send(client_socket, "END", 4, 0);
+    if (sending < 0)
+        error("ERROR: Sending END! (Server)\n");
+
+    bytes_sended += sending;
+
+    fclose(file);
+    close(client_socket);
+    close(server_socket);
 
     struct timeval finish_time;
     gettimeofday(&finish_time, NULL);
@@ -81,10 +129,11 @@ int main (int argc, char **argv) {
     double total_time = (finish - start) / 1000000.0;
 
     //printf("%0.3lf\n", total_time);
-    printf("Buffer: %5u Byte(s) \nTaxa: %10.2f kbps (%u Bytes em %0.3lf s)\n", buffer_size,
+    printf("Buffer: %5u Byte(s) \nTaxa: %10.2lf kbps (%u Bytes em %0.3lf s)\n", buffer_size,
                                                                                 ((bytes_sended / 1000.0) / total_time),
                                                                                 bytes_sended,
                                                                                 total_time);
+
     free(buffer);
     return 0;
 }
