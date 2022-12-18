@@ -68,7 +68,7 @@ int main (int argc, char **argv) {
     if (sending < 0)
         error("ERROR: ACK! (Server)\n");
 
-    unsigned int bytes_sended = sending;
+    //unsigned int bytes_sended = sending;
 
     int i;
     for (i = 0; ; i++) {
@@ -86,8 +86,9 @@ int main (int argc, char **argv) {
     if (sending < 0)
         error("ERROR: File ACK! (Server)\n");
 
-    bytes_sended += sending;
+    //bytes_sended += sending;
 
+    unsigned int bytes_sended = 0;
     FILE *file = fopen(strcat(".../files/", message), "r");
     if (file == NULL)
         error("ERROR: Opening file! (Server)\n");
