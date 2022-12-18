@@ -11,5 +11,6 @@
 #include <dirent.h>
 #include <stdio.h>
 
-// ACUSAÇÃO DE ERROS
+// ACUSAÇÃO DE ERROS E CRIAÇÃO DAS CONEXÕES (SOCKETS)
 void error (const char *msg);
+int socket_creation (unsigned int port_number);
