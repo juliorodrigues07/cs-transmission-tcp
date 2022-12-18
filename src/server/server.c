@@ -40,6 +40,9 @@ int main (int argc, char **argv) {
     unsigned int port_number = atoi(argv[1]);
     unsigned int buffer_size = atoi(argv[2]);
 
+    struct timeval start_time;
+    gettimeofday(&start_time, NULL);
+
     char *buffer = (char *) malloc(buffer_size * sizeof(char));
 
     // Criação do socket do servidor
@@ -55,9 +58,6 @@ int main (int argc, char **argv) {
         error("ERROR: Accept! (Server)\n");
 
     printf("Connection Successful!\n");
-
-    struct timeval start_time;
-    gettimeofday(&start_time, NULL);
 
     char message[100];
     long int receiving = recv(client_socket, message, 100, 0);
